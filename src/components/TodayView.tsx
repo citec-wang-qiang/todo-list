@@ -1,4 +1,4 @@
-import { Checkbox, Empty } from 'antd'
+import { Checkbox, Tag, Empty, Space } from 'antd'
 import { HolderOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import {
@@ -19,6 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useTaskStore, type Task } from '../stores/taskStore'
 import { useUIStore } from '../stores/uiStore'
+import { useTagStore } from '../stores/tagStore'
 import { filterTasks } from '../utils/filter'
 import HighlightText from './HighlightText'
 
@@ -27,6 +28,8 @@ function SortableTodayItem({ task }: { task: Task }) {
   const selectedTaskId = useUIStore((s) => s.selectedTaskId)
   const setSelectedTaskId = useUIStore((s) => s.setSelectedTaskId)
   const toggleComplete = useTaskStore((s) => s.toggleComplete)
+  const allTags = useTagStore((s) => s.tags)
+  const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
 
   const {
     attributes,
@@ -67,11 +70,18 @@ function SortableTodayItem({ task }: { task: Task }) {
         onClick={(e) => e.stopPropagation()}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <HighlightText
-          text={task.title}
-          query={searchQuery}
-          delete={task.status === 'done'}
-        />
+        <Space size={4} wrap>
+          <HighlightText
+            text={task.title}
+            query={searchQuery}
+            delete={task.status === 'done'}
+          />
+          {task.tags.map((tagName) => (
+            <Tag key={tagName} color={tagColorMap[tagName] || 'default'}>
+              {tagName}
+            </Tag>
+          ))}
+        </Space>
       </div>
     </div>
   )
@@ -84,6 +94,8 @@ export default function TodayView() {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filters = useUIStore((s) => s.filters)
   const selectedListId = useUIStore((s) => s.selectedListId)
+  const allTags = useTagStore((s) => s.tags)
+  const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
 
   const todayStr = new Date().toISOString().slice(0, 10)
   const todayTasks = tasks.filter((t) => t.dueDate?.startsWith(todayStr))

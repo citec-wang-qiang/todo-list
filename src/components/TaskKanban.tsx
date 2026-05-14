@@ -1,4 +1,4 @@
-import { Card, Empty, Typography, Flex } from 'antd'
+import { Card, Tag, Empty, Typography, Flex, Space } from 'antd'
 import { HolderOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import {
@@ -21,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMemo } from 'react'
 import { useTaskStore, type Task, type TaskStatus } from '../stores/taskStore'
 import { useUIStore } from '../stores/uiStore'
+import { useTagStore } from '../stores/tagStore'
 import { filterTasks } from '../utils/filter'
 import HighlightText from './HighlightText'
 
@@ -34,6 +35,8 @@ function SortableKanbanItem({ task }: { task: Task }) {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const selectedTaskId = useUIStore((s) => s.selectedTaskId)
   const setSelectedTaskId = useUIStore((s) => s.setSelectedTaskId)
+  const allTags = useTagStore((s) => s.tags)
+  const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
 
   const {
     attributes,
@@ -69,6 +72,15 @@ function SortableKanbanItem({ task }: { task: Task }) {
             delete={task.status === 'done'}
           />
         </div>
+        {task.tags.length > 0 && (
+          <Space size={4} wrap style={{ marginTop: 4, paddingLeft: 20 }}>
+            {task.tags.map((tagName) => (
+              <Tag key={tagName} color={tagColorMap[tagName] || 'default'}>
+                {tagName}
+              </Tag>
+            ))}
+          </Space>
+        )}
       </Card>
     </div>
   )
@@ -82,6 +94,9 @@ function DroppableColumn({ status, titleKey, color, tasks }: {
 }) {
   const { t } = useTranslation()
   const { setNodeRef, isOver } = useDroppable({ id: `column:${status}`, data: { status } })
+  const searchQuery = useUIStore((s) => s.searchQuery)
+  const allTags = useTagStore((s) => s.tags)
+  const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
 
   const style: React.CSSProperties = {
     flex: 1,

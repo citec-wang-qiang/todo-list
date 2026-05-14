@@ -9,6 +9,9 @@
   "view.kanban": "Kanban",
   "view.today": "Today",
   "task.addPlaceholder": "Add a task, press Enter to confirm",
+  "task.title": "Task Title",
+  "task.description": "Description",
+  "task.edit": "Edit Task",
   "task.search": "Search tasks...",
   "task.priority.high": "High",
   "task.priority.medium": "Medium",
@@ -54,5 +57,14 @@
   "shortcut.viewList": "Switch to List View",
   "shortcut.viewKanban": "Switch to Kanban View",
   "shortcut.viewToday": "Switch to Today View",
-  "shortcut.help": "Show Shortcut Help"
+  "shortcut.help": "Show Shortcut Help",
+  "tag.manage": "Tag Manager",
+  "tag.name": "Tag Name",
+  "tag.color": "Color",
+  "tag.new": "New Tag",
+  "tag.edit": "Edit Tag",
+  "tag.delete": "Delete Tag",
+  "tag.deleteConfirm": "Are you sure you want to delete tag \"{{name}}\"? It will be removed from all associated tasks.",
+  "tag.namePlaceholder": "Enter tag name",
+  "tag.empty": "No tags yet. Create one below."
 }
