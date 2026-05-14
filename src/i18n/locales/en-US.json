@@ -77,5 +77,11 @@
   "tag.delete": "Delete Tag",
   "tag.deleteConfirm": "Are you sure you want to delete tag \"{{name}}\"? It will be removed from all associated tasks.",
   "tag.namePlaceholder": "Enter tag name",
-  "tag.empty": "No tags yet. Create one below."
+  "tag.empty": "No tags yet. Create one below.",
+  "subtask.title": "Subtasks",
+  "subtask.add": "Add Subtask",
+  "subtask.progress": "{{done}}/{{total}} completed",
+  "subtask.autoComplete": "Auto-complete all subtasks when parent is completed",
+  "subtask.noSubtasks": "No subtasks",
+  "subtask.maxLevel": "Maximum nesting level reached"
 }

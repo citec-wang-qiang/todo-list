@@ -1,4 +1,5 @@
-import { Checkbox, Tag, Empty, Space } from 'antd'
+import { useState } from 'react'
+import { Checkbox, Tag, Empty, Space, Badge } from 'antd'
 import { HolderOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import {
@@ -22,14 +23,17 @@ import { useUIStore } from '../stores/uiStore'
 import { useTagStore } from '../stores/tagStore'
 import { filterTasks } from '../utils/filter'
 import HighlightText from './HighlightText'
+import TaskDetail from './TaskDetail'
 
-function SortableTodayItem({ task }: { task: Task }) {
+function SortableTodayItem({ task, onOpenDetail }: { task: Task; onOpenDetail: (id: string) => void }) {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const selectedTaskId = useUIStore((s) => s.selectedTaskId)
   const setSelectedTaskId = useUIStore((s) => s.setSelectedTaskId)
   const toggleComplete = useTaskStore((s) => s.toggleComplete)
   const allTags = useTagStore((s) => s.tags)
   const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
+  const getSubtaskProgress = useTaskStore((s) => s.getSubtaskProgress)
+  const progress = getSubtaskProgress(task.id)
 
   const {
     attributes,
@@ -55,7 +59,7 @@ function SortableTodayItem({ task }: { task: Task }) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} onClick={() => setSelectedTaskId(task.id)}>
+    <div ref={setNodeRef} style={style} onClick={() => { setSelectedTaskId(task.id); onOpenDetail(task.id) }}>
       <span
         {...attributes}
         {...listeners}
@@ -83,6 +87,15 @@ function SortableTodayItem({ task }: { task: Task }) {
           ))}
         </Space>
       </div>
+      {progress.total > 0 && (
+        <Badge
+          count={`${progress.done}/${progress.total}`}
+          style={{
+            backgroundColor: progress.done === progress.total ? '#52c41a' : '#1677ff',
+            fontSize: 11,
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -94,8 +107,7 @@ export default function TodayView() {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filters = useUIStore((s) => s.filters)
   const selectedListId = useUIStore((s) => s.selectedListId)
-  const allTags = useTagStore((s) => s.tags)
-  const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
 
   const todayStr = new Date().toISOString().slice(0, 10)
   const todayTasks = tasks.filter((t) => t.dueDate?.startsWith(todayStr))
@@ -132,21 +144,24 @@ export default function TodayView() {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={sorted.map((t) => t.id)}
-        strategy={verticalListSortingStrategy}
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        <div style={{ padding: '4px 0' }}>
-          {sorted.map((task) => (
-            <SortableTodayItem key={task.id} task={task} />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+        <SortableContext
+          items={sorted.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div style={{ padding: '4px 0' }}>
+            {sorted.map((task) => (
+              <SortableTodayItem key={task.id} task={task} onOpenDetail={setDetailTaskId} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      <TaskDetail taskId={detailTaskId} onClose={() => setDetailTaskId(null)} />
+    </>
   )
 }

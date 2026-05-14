@@ -35,11 +35,20 @@ interface TaskState {
   toggleStar: (id: string) => Promise<void>
   reorderTasks: (orderedIds: string[]) => Promise<void>
   moveTask: (taskId: string, newStatus: TaskStatus, insertAfterId: string | null) => Promise<void>
+
+  getSubtasks: (parentId: string) => Task[]
+  getNestingLevel: (taskId: string) => number
+  getSubtaskProgress: (parentId: string) => { done: number; total: number }
+  addSubtask: (parentId: string, title: string) => Promise<void>
+  toggleCompleteWithSubtasks: (id: string) => Promise<void>
+  reorderSubtasks: (parentId: string | null, orderedIds: string[]) => Promise<void>
+  MAX_NESTING_LEVEL: number
 }
 
 export const useTaskStore = create<TaskState>()((set, get) => ({
   tasks: [],
   loaded: false,
+  MAX_NESTING_LEVEL: 3,
 
   init: async () => {
     if (get().loaded) return
@@ -263,5 +272,176 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
           : t
       ),
     }))
+  },
+
+  getSubtasks: (parentId) => {
+    return get()
+      .tasks.filter((t) => t.parentId === parentId)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+  },
+
+  getNestingLevel: (taskId) => {
+    let level = 0
+    let currentId: string | null = taskId
+    const tasks = get().tasks
+    while (currentId) {
+      const task = tasks.find((t) => t.id === currentId)
+      if (!task || !task.parentId) break
+      level++
+      currentId = task.parentId
+    }
+    return level
+  },
+
+  getSubtaskProgress: (parentId) => {
+    const subtasks = get().getSubtasks(parentId)
+    const done = subtasks.filter((t) => t.status === 'done').length
+    return { done, total: subtasks.length }
+  },
+
+  addSubtask: async (parentId, title) => {
+    const siblings = get().getSubtasks(parentId)
+    const now = new Date().toISOString()
+    const task: Task = {
+      id: crypto.randomUUID(),
+      title,
+      description: '',
+      priority: 'none',
+      status: 'todo',
+      dueDate: null,
+      listId: null,
+      tags: [],
+      isStarred: false,
+      parentId,
+      sortOrder: siblings.length,
+      createdAt: now,
+      updatedAt: now,
+    }
+    await insertTask(task)
+    set((s) => ({ tasks: [task, ...s.tasks] }))
+
+    useHistoryStore.getState().push({
+      description: `添加子任务: ${title}`,
+      undo: async () => {
+        await deleteTask(task.id)
+        useTaskStore.setState((s) => ({
+          tasks: s.tasks.filter((t) => t.id !== task.id),
+        }))
+      },
+      redo: async () => {
+        await insertTask(task)
+        useTaskStore.setState((s) => ({
+          tasks: [task, ...s.tasks],
+        }))
+      },
+    })
+  },
+
+  toggleCompleteWithSubtasks: async (id) => {
+    const task = get().tasks.find((t) => t.id === id)
+    if (!task) return
+    const oldStatus = task.status
+    const newStatus = oldStatus === 'done' ? 'todo' : 'done'
+
+    const collectDescendants = (parentId: string): string[] => {
+      const children = get().tasks.filter((t) => t.parentId === parentId)
+      const ids = children.map((c) => c.id)
+      for (const child of children) {
+        ids.push(...collectDescendants(child.id))
+      }
+      return ids
+    }
+
+    const allIds = [id, ...collectDescendants(id)]
+
+    const oldStatuses = new Map<string, string>()
+    for (const tid of allIds) {
+      const t = get().tasks.find((t) => t.id === tid)
+      if (t) oldStatuses.set(tid, t.status)
+    }
+
+    for (const tid of allIds) {
+      await updateTask(tid, { status: newStatus })
+    }
+
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        allIds.includes(t.id)
+          ? { ...t, status: newStatus, updatedAt: new Date().toISOString() }
+          : t
+      ),
+    }))
+
+    useHistoryStore.getState().push({
+      description: `${oldStatus === 'done' ? '取消完成' : '完成任务'}及其子任务: ${task.title}`,
+      undo: async () => {
+        for (const [tid, st] of oldStatuses) {
+          await updateTask(tid, { status: st as TaskStatus })
+        }
+        useTaskStore.setState((s) => ({
+          tasks: s.tasks.map((t) => {
+            const oldSt = oldStatuses.get(t.id)
+            return oldSt ? { ...t, status: oldSt as TaskStatus } : t
+          }),
+        }))
+      },
+      redo: async () => {
+        for (const tid of allIds) {
+          await updateTask(tid, { status: newStatus })
+        }
+        useTaskStore.setState((s) => ({
+          tasks: s.tasks.map((t) =>
+            allIds.includes(t.id)
+              ? { ...t, status: newStatus, updatedAt: new Date().toISOString() }
+              : t
+          ),
+        }))
+      },
+    })
+  },
+
+  reorderSubtasks: async (parentId, orderedIds) => {
+    const oldTasks = get().tasks
+      .filter((t) => t.parentId === parentId)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+
+    for (let i = 0; i < orderedIds.length; i++) {
+      await updateTask(orderedIds[i], { sortOrder: i })
+    }
+
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        orderedIds.includes(t.id)
+          ? { ...t, sortOrder: orderedIds.indexOf(t.id) }
+          : t
+      ),
+    }))
+
+    useHistoryStore.getState().push({
+      description: '重新排序子任务',
+      undo: async () => {
+        for (const ot of oldTasks) {
+          await updateTask(ot.id, { sortOrder: ot.sortOrder })
+        }
+        useTaskStore.setState((s) => ({
+          tasks: s.tasks.map((t) => {
+            const old = oldTasks.find((o) => o.id === t.id)
+            return old ? { ...t, sortOrder: old.sortOrder } : t
+          }),
+        }))
+      },
+      redo: async () => {
+        for (let i = 0; i < orderedIds.length; i++) {
+          await updateTask(orderedIds[i], { sortOrder: i })
+        }
+        useTaskStore.setState((s) => ({
+          tasks: s.tasks.map((t) =>
+            orderedIds.includes(t.id)
+              ? { ...t, sortOrder: orderedIds.indexOf(t.id) }
+              : t
+          ),
+        }))
+      },
+    })
   },
 }))

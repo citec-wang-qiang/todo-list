@@ -1,4 +1,4 @@
-import { Card, Tag, Empty, Typography, Flex, Space } from 'antd'
+import { Card, Tag, Empty, Typography, Flex, Space, Badge } from 'antd'
 import { HolderOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import {
@@ -18,12 +18,13 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTaskStore, type Task, type TaskStatus } from '../stores/taskStore'
 import { useUIStore } from '../stores/uiStore'
 import { useTagStore } from '../stores/tagStore'
 import { filterTasks } from '../utils/filter'
 import HighlightText from './HighlightText'
+import TaskDetail from './TaskDetail'
 
 const columns: { status: TaskStatus; titleKey: string; color: string }[] = [
   { status: 'todo', titleKey: 'task.status.todo', color: '#1677ff' },
@@ -31,12 +32,14 @@ const columns: { status: TaskStatus; titleKey: string; color: string }[] = [
   { status: 'done', titleKey: 'task.status.done', color: '#52c41a' }
 ]
 
-function SortableKanbanItem({ task }: { task: Task }) {
+function SortableKanbanItem({ task, onOpenDetail }: { task: Task; onOpenDetail: (id: string) => void }) {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const selectedTaskId = useUIStore((s) => s.selectedTaskId)
   const setSelectedTaskId = useUIStore((s) => s.setSelectedTaskId)
   const allTags = useTagStore((s) => s.tags)
   const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
+  const getSubtaskProgress = useTaskStore((s) => s.getSubtaskProgress)
+  const progress = getSubtaskProgress(task.id)
 
   const {
     attributes,
@@ -56,21 +59,32 @@ function SortableKanbanItem({ task }: { task: Task }) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} onClick={() => setSelectedTaskId(task.id)}>
+    <div ref={setNodeRef} style={style} onClick={() => { setSelectedTaskId(task.id); onOpenDetail(task.id) }}>
       <Card size="small" style={{ marginBottom: 8, borderColor: isSelected ? '#1677ff' : undefined }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span
-            {...attributes}
-            {...listeners}
-            style={{ cursor: 'grab', color: '#999', flexShrink: 0 }}
-          >
-            <HolderOutlined />
-          </span>
-          <HighlightText
-            text={task.title}
-            query={searchQuery}
-            delete={task.status === 'done'}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 }}>
+            <span
+              {...attributes}
+              {...listeners}
+              style={{ cursor: 'grab', color: '#999', flexShrink: 0 }}
+            >
+              <HolderOutlined />
+            </span>
+            <HighlightText
+              text={task.title}
+              query={searchQuery}
+              delete={task.status === 'done'}
+            />
+          </div>
+          {progress.total > 0 && (
+            <Badge
+              count={`${progress.done}/${progress.total}`}
+              style={{
+                backgroundColor: progress.done === progress.total ? '#52c41a' : '#1677ff',
+                fontSize: 10,
+              }}
+            />
+          )}
         </div>
         {task.tags.length > 0 && (
           <Space size={4} wrap style={{ marginTop: 4, paddingLeft: 20 }}>
@@ -86,11 +100,12 @@ function SortableKanbanItem({ task }: { task: Task }) {
   )
 }
 
-function DroppableColumn({ status, titleKey, color, tasks }: {
+function DroppableColumn({ status, titleKey, color, tasks, onOpenDetail }: {
   status: TaskStatus
   titleKey: string
   color: string
   tasks: Task[]
+  onOpenDetail: (id: string) => void
 }) {
   const { t } = useTranslation()
   const { setNodeRef, isOver } = useDroppable({ id: `column:${status}`, data: { status } })
@@ -118,7 +133,7 @@ function DroppableColumn({ status, titleKey, color, tasks }: {
       <div style={{ minHeight: 200 }}>
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
-            <SortableKanbanItem key={task.id} task={task} />
+            <SortableKanbanItem key={task.id} task={task} onOpenDetail={onOpenDetail} />
           ))}
         </SortableContext>
       </div>
@@ -134,6 +149,7 @@ export default function TaskKanban() {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filters = useUIStore((s) => s.filters)
   const selectedListId = useUIStore((s) => s.selectedListId)
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
 
   const filtered = filterTasks(tasks, searchQuery, filters, selectedListId)
 
@@ -209,22 +225,26 @@ export default function TaskKanban() {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragEnd={handleDragEnd}
-    >
-      <Flex gap={16} style={{ padding: '8px 0', overflow: 'auto' }}>
-        {columns.map((col) => (
-          <DroppableColumn
-            key={col.status}
-            status={col.status}
-            titleKey={col.titleKey}
-            color={col.color}
-            tasks={columnTasks[col.status]}
-          />
-        ))}
-      </Flex>
-    </DndContext>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragEnd={handleDragEnd}
+      >
+        <Flex gap={16} style={{ padding: '8px 0', overflow: 'auto' }}>
+          {columns.map((col) => (
+            <DroppableColumn
+              key={col.status}
+              status={col.status}
+              titleKey={col.titleKey}
+              color={col.color}
+              tasks={columnTasks[col.status]}
+              onOpenDetail={setDetailTaskId}
+            />
+          ))}
+        </Flex>
+      </DndContext>
+      <TaskDetail taskId={detailTaskId} onClose={() => setDetailTaskId(null)} />
+    </>
   )
 }
