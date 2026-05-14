@@ -77,5 +77,11 @@
   "tag.delete": "删除标签",
   "tag.deleteConfirm": "确定要删除标签\"{{name}}\"吗？该标签将从所有关联任务中移除。",
   "tag.namePlaceholder": "输入标签名称",
-  "tag.empty": "暂无标签，请在下方创建。"
+  "tag.empty": "暂无标签，请在下方创建。",
+  "subtask.title": "子任务",
+  "subtask.add": "添加子任务",
+  "subtask.progress": "{{done}}/{{total}} 已完成",
+  "subtask.autoComplete": "完成父任务时自动完成所有子任务",
+  "subtask.noSubtasks": "暂无子任务",
+  "subtask.maxLevel": "已达到最大嵌套层级"
 }

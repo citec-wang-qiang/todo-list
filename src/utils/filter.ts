@@ -5,12 +5,15 @@ export function filterTasks(
   tasks: Task[],
   searchQuery: string,
   filters: Filters,
-  selectedListId: string | null
+  selectedListId: string | null,
+  options?: { excludeChildren?: boolean }
 ): Task[] {
   const query = searchQuery.trim().toLowerCase()
   const listId = selectedListId || (filters.listId !== 'all' ? filters.listId : null)
+  const excludeChildren = options?.excludeChildren ?? true
 
   return tasks.filter((task) => {
+    if (excludeChildren && task.parentId != null) return false
     if (listId && task.listId !== listId) return false
     if (filters.priority !== 'all' && task.priority !== filters.priority) return false
     if (filters.status !== 'all' && task.status !== filters.status) return false

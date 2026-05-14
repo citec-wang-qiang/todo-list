@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Checkbox, Tag, Empty, Space, Typography } from 'antd'
-import { StarOutlined, StarFilled, HolderOutlined, BellOutlined } from '@ant-design/icons'
+import { Checkbox, Tag, Empty, Space, Typography, Badge } from 'antd'
+import { StarOutlined, StarFilled, HolderOutlined, EditOutlined, BellOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import {
   DndContext,
@@ -23,6 +23,7 @@ import { useUIStore } from '../stores/uiStore'
 import { filterTasks } from '../utils/filter'
 import HighlightText from './HighlightText'
 import TaskEditModal from './TaskEditModal'
+import TaskDetail from './TaskDetail'
 
 const priorityColor: Record<Priority, string> = {
   high: 'red',
@@ -143,6 +144,8 @@ export default function TaskList() {
   const selectedListId = useUIStore((s) => s.selectedListId)
   const sortField = useUIStore((s) => s.sortField)
   const sortOrder = useUIStore((s) => s.sortOrder)
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
+
   const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   const filtered = filterTasks(tasks, searchQuery, filters, selectedListId)
@@ -211,6 +214,7 @@ export default function TaskList() {
           </div>
         </SortableContext>
       </DndContext>
+      <TaskDetail taskId={detailTaskId} onClose={() => setDetailTaskId(null)} />
       <TaskEditModal
         task={editingTask}
         open={editingTask !== null}
