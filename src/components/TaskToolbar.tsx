@@ -1,10 +1,11 @@
-import { Input, Select, Space, Button } from 'antd'
-import { SearchOutlined, ClearOutlined } from '@ant-design/icons'
+import { Input, Select, Space, Button, Tooltip } from 'antd'
+import { SearchOutlined, ClearOutlined, UndoOutlined, RedoOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useUIStore } from '../stores/uiStore'
 import type { Priority, TaskStatus } from '../stores/taskStore'
 import { useTaskStore } from '../stores/taskStore'
 import { useListStore } from '../stores/listStore'
+import { useHistoryStore } from '../stores/historyStore'
 
 const priorityOptions: { value: Priority | 'all'; labelKey: string }[] = [
   { value: 'all', labelKey: 'filter.allPriority' },
@@ -36,6 +37,10 @@ export default function TaskToolbar() {
   const clearFilters = useUIStore((s) => s.clearFilters)
   const tasks = useTaskStore((s) => s.tasks)
   const lists = useListStore((s) => s.lists)
+  const canUndo = useHistoryStore((s) => s.past.length > 0)
+  const canRedo = useHistoryStore((s) => s.future.length > 0)
+  const undo = useHistoryStore((s) => s.undo)
+  const redo = useHistoryStore((s) => s.redo)
 
   const allTags = [...new Set(tasks.flatMap((t) => t.tags))].sort()
 
@@ -79,6 +84,22 @@ export default function TaskToolbar() {
                 { value: 'asc', label: '↑' }
               ]}
             />
+            <Tooltip title={`${t('toolbar.undo')} (Ctrl+Z)`}>
+              <Button
+                icon={<UndoOutlined />}
+                disabled={!canUndo}
+                onClick={undo}
+                size="small"
+              />
+            </Tooltip>
+            <Tooltip title={`${t('toolbar.redo')} (Ctrl+Shift+Z)`}>
+              <Button
+                icon={<RedoOutlined />}
+                disabled={!canRedo}
+                onClick={redo}
+                size="small"
+              />
+            </Tooltip>
           </Space>
         </Space>
         <Space wrap>

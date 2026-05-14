@@ -29,5 +29,7 @@
   "filter.allPriority": "全部优先级",
   "filter.allStatus": "全部状态",
   "filter.allList": "全部清单",
-  "filter.clear": "清除筛选"
+  "filter.clear": "清除筛选",
+  "toolbar.undo": "撤销",
+  "toolbar.redo": "重做"
 }
