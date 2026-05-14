@@ -34,6 +34,7 @@ export default function QuickAddBar() {
       priority: 'none',
       status: 'todo',
       dueDate: null,
+      reminderAt: null,
       listId: selectedListId,
       tags: [],
       isStarred: false,

@@ -14,3 +14,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.task-highlight {
+  animation: task-highlight-anim 2s ease-out;
+}
+
+@keyframes task-highlight-anim {
+  0% { background-color: rgba(22, 119, 255, 0.15); }
+  100% { background-color: transparent; }
+}

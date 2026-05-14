@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Checkbox, Tag, Empty, Space, Typography } from 'antd'
-import { StarOutlined, StarFilled, HolderOutlined, EditOutlined } from '@ant-design/icons'
+import { StarOutlined, StarFilled, HolderOutlined, BellOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import {
   DndContext,
@@ -20,7 +20,6 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useTaskStore, type Priority, type Task } from '../stores/taskStore'
 import { useUIStore } from '../stores/uiStore'
-import { useTagStore } from '../stores/tagStore'
 import { filterTasks } from '../utils/filter'
 import HighlightText from './HighlightText'
 import TaskEditModal from './TaskEditModal'
@@ -46,8 +45,6 @@ function SortableTaskItem({ task, onEdit }: { task: Task; onEdit: () => void }) 
   const setSelectedTaskId = useUIStore((s) => s.setSelectedTaskId)
   const toggleComplete = useTaskStore((s) => s.toggleComplete)
   const toggleStar = useTaskStore((s) => s.toggleStar)
-  const allTags = useTagStore((s) => s.tags)
-  const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
 
   const {
     attributes,
@@ -73,7 +70,12 @@ function SortableTaskItem({ task, onEdit }: { task: Task; onEdit: () => void }) 
   }
 
   return (
-    <div ref={setNodeRef} style={style} onClick={() => setSelectedTaskId(task.id)}>
+    <div
+      ref={setNodeRef}
+      id={`task-${task.id}`}
+      style={style}
+      onClick={() => { setSelectedTaskId(task.id); onEdit() }}
+    >
       <span
         {...attributes}
         {...listeners}
@@ -100,11 +102,6 @@ function SortableTaskItem({ task, onEdit }: { task: Task; onEdit: () => void }) 
                 {t(priorityLabelKey[task.priority])}
               </Tag>
             )}
-            {task.tags.map((tagName) => (
-              <Tag key={tagName} color={tagColorMap[tagName] || 'default'}>
-                {tagName}
-              </Tag>
-            ))}
           </Space>
         </div>
         {(task.description || task.dueDate) && (
@@ -119,17 +116,14 @@ function SortableTaskItem({ task, onEdit }: { task: Task; onEdit: () => void }) 
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                 {task.description && searchQuery.trim() ? ' · ' : ''}
                 {new Date(task.dueDate).toLocaleDateString()}
+                {task.reminderAt && (
+                  <span style={{ marginLeft: 4 }}><BellOutlined style={{ fontSize: 11 }} /></span>
+                )}
               </Typography.Text>
             )}
           </div>
         )}
       </div>
-      <span
-        onClick={(e) => { e.stopPropagation(); onEdit() }}
-        style={{ cursor: 'pointer', flexShrink: 0, padding: 4 }}
-      >
-        <EditOutlined />
-      </span>
       <span
         onClick={(e) => { e.stopPropagation(); toggleStar(task.id) }}
         style={{ cursor: 'pointer', flexShrink: 0, padding: 4 }}
@@ -149,7 +143,6 @@ export default function TaskList() {
   const selectedListId = useUIStore((s) => s.selectedListId)
   const sortField = useUIStore((s) => s.sortField)
   const sortOrder = useUIStore((s) => s.sortOrder)
-
   const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   const filtered = filterTasks(tasks, searchQuery, filters, selectedListId)
