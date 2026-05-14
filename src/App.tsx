@@ -1,10 +1,18 @@
+import { useEffect } from 'react'
 import { ConfigProvider, theme, App as AntApp } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import { useUIStore } from './stores/uiStore'
+import { useTaskStore } from './stores/taskStore'
+import { useListStore } from './stores/listStore'
 import AppLayout from './components/AppLayout'
 
 export default function App() {
   const themeMode = useUIStore((s) => s.themeMode)
+
+  useEffect(() => {
+    useTaskStore.getState().init()
+    useListStore.getState().init()
+  }, [])
 
   return (
     <ConfigProvider

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { loadTasks, insertTask, updateTask, deleteTask } from '../db/tasks'
 
 export type Priority = 'high' | 'medium' | 'low' | 'none'
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
@@ -20,43 +21,68 @@ export interface Task {
 
 interface TaskState {
   tasks: Task[]
+  loaded: boolean
 
-  addTask: (task: Task) => void
-  updateTask: (id: string, patch: Partial<Task>) => void
-  deleteTask: (id: string) => void
-  toggleComplete: (id: string) => void
-  toggleStar: (id: string) => void
+  init: () => Promise<void>
+  addTask: (task: Task) => Promise<void>
+  updateTask: (id: string, patch: Partial<Task>) => Promise<void>
+  deleteTask: (id: string) => Promise<void>
+  toggleComplete: (id: string) => Promise<void>
+  toggleStar: (id: string) => Promise<void>
 }
 
-export const useTaskStore = create<TaskState>()((set) => ({
+export const useTaskStore = create<TaskState>()((set, get) => ({
   tasks: [],
+  loaded: false,
 
-  addTask: (task) =>
-    set((s) => ({ tasks: [...s.tasks, task] })),
+  init: async () => {
+    if (get().loaded) return
+    const tasks = await loadTasks()
+    set({ tasks, loaded: true })
+  },
 
-  updateTask: (id, patch) =>
+  addTask: async (task) => {
+    await insertTask(task)
+    set((s) => ({ tasks: [task, ...s.tasks] }))
+  },
+
+  updateTask: async (id, patch) => {
+    await updateTask(id, patch)
     set((s) => ({
       tasks: s.tasks.map((t) =>
         t.id === id ? { ...t, ...patch, updatedAt: new Date().toISOString() } : t
-      )
-    })),
+      ),
+    }))
+  },
 
-  deleteTask: (id) =>
-    set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+  deleteTask: async (id) => {
+    await deleteTask(id)
+    set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
+  },
 
-  toggleComplete: (id) =>
+  toggleComplete: async (id) => {
+    const task = get().tasks.find((t) => t.id === id)
+    if (!task) return
+    const newStatus = task.status === 'done' ? 'todo' : 'done'
+    await updateTask(id, { status: newStatus })
     set((s) => ({
       tasks: s.tasks.map((t) =>
         t.id === id
-          ? { ...t, status: t.status === 'done' ? 'todo' : 'done', updatedAt: new Date().toISOString() }
+          ? { ...t, status: newStatus, updatedAt: new Date().toISOString() }
           : t
-      )
-    })),
+      ),
+    }))
+  },
 
-  toggleStar: (id) =>
+  toggleStar: async (id) => {
+    const task = get().tasks.find((t) => t.id === id)
+    if (!task) return
+    const newStarred = !task.isStarred
+    await updateTask(id, { isStarred: newStarred })
     set((s) => ({
       tasks: s.tasks.map((t) =>
-        t.id === id ? { ...t, isStarred: !t.isStarred } : t
-      )
+        t.id === id ? { ...t, isStarred: newStarred } : t
+      ),
     }))
+  },
 }))
