@@ -31,5 +31,15 @@
   "filter.allList": "全部清单",
   "filter.clear": "清除筛选",
   "toolbar.undo": "撤销",
-  "toolbar.redo": "重做"
+  "toolbar.redo": "重做",
+  "data.title": "数据管理",
+  "data.export": "导出",
+  "data.import": "导入",
+  "data.exportJSON": "导出 JSON",
+  "data.exportCSV": "导出 CSV",
+  "data.importJSON": "从 JSON 导入",
+  "data.importCSV": "从 CSV 导入",
+  "data.backupRestore": "备份与恢复",
+  "data.createBackup": "创建备份",
+  "data.restoreBackup": "从备份恢复"
 }

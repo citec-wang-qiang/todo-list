@@ -31,5 +31,15 @@
   "filter.allList": "All Lists",
   "filter.clear": "Clear Filters",
   "toolbar.undo": "Undo",
-  "toolbar.redo": "Redo"
+  "toolbar.redo": "Redo",
+  "data.title": "Data",
+  "data.export": "Export",
+  "data.import": "Import",
+  "data.exportJSON": "Export JSON",
+  "data.exportCSV": "Export CSV",
+  "data.importJSON": "Import from JSON",
+  "data.importCSV": "Import from CSV",
+  "data.backupRestore": "Backup & Restore",
+  "data.createBackup": "Create Backup",
+  "data.restoreBackup": "Restore from Backup"
 }
