@@ -5,6 +5,7 @@ node_modules/
 dist/
 out/
 build/
+.vite/
 
 # IDE
 .vscode/
@@ -13,6 +14,10 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Database
+*.db
+*.db-journal
 
 # Agent orchestrator
 .claude/

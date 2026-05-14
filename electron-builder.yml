@@ -1,0 +1,27 @@
+appId: com.todolist.app
+productName: Todo List
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**/*
+  - package.json
+win:
+  target:
+    - nsis
+    - msi
+  icon: resources/icon.ico
+mac:
+  target:
+    - dmg
+  icon: resources/icon.icns
+  category: public.app-category.productivity
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: resources/icon.png
+  category: Utility
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
