@@ -8,6 +8,7 @@ interface TaskRow {
   priority: string
   status: string
   due_date: string | null
+  reminder_at: string | null
   list_id: string | null
   is_starred: number
   parent_id: string | null
@@ -25,6 +26,7 @@ function rowToTask(row: TaskRow): Task {
     priority: row.priority as Task['priority'],
     status: row.status as Task['status'],
     dueDate: row.due_date,
+    reminderAt: row.reminder_at,
     listId: row.list_id,
     tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
     isStarred: row.is_starred === 1,
@@ -51,8 +53,8 @@ export async function loadTasks(): Promise<Task[]> {
 export async function insertTask(task: Task): Promise<void> {
   const db = await getDb()
   await db.execute(
-    `INSERT INTO tasks (id, title, description, priority, status, due_date, list_id, is_starred, parent_id, sort_order, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+    `INSERT INTO tasks (id, title, description, priority, status, due_date, reminder_at, list_id, is_starred, parent_id, sort_order, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
     [
       task.id,
       task.title,
@@ -60,6 +62,7 @@ export async function insertTask(task: Task): Promise<void> {
       task.priority,
       task.status,
       task.dueDate,
+      task.reminderAt,
       task.listId,
       task.isStarred ? 1 : 0,
       task.parentId,
@@ -83,6 +86,7 @@ export async function updateTask(id: string, patch: Partial<Task>): Promise<void
     priority: 'priority',
     status: 'status',
     dueDate: 'due_date',
+    reminderAt: 'reminder_at',
     listId: 'list_id',
     isStarred: 'is_starred',
     parentId: 'parent_id',

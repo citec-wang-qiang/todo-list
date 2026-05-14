@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { loadTasks, insertTask, updateTask, deleteTask, batchUpdateSortOrders } from '../db/tasks'
 import { useHistoryStore } from './historyStore'
+import { cancelReminder, scheduleReminder } from '../hooks/useReminder'
 
 export type Priority = 'high' | 'medium' | 'low' | 'none'
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
@@ -12,6 +13,7 @@ export interface Task {
   priority: Priority
   status: TaskStatus
   dueDate: string | null
+  reminderAt: string | null
   listId: string | null
   tags: string[]
   isStarred: boolean
@@ -111,6 +113,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     if (!task) return
 
     await deleteTask(id)
+    cancelReminder(id)
     set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
 
     useHistoryStore.getState().push({
@@ -136,6 +139,11 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     const oldStatus = task.status
     const newStatus = oldStatus === 'done' ? 'todo' : 'done'
     await updateTask(id, { status: newStatus })
+    if (newStatus === 'done') {
+      cancelReminder(id)
+    } else if (task.reminderAt) {
+      scheduleReminder(id, task.title, task.reminderAt)
+    }
     set((s) => ({
       tasks: s.tasks.map((t) =>
         t.id === id
