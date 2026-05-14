@@ -4,6 +4,7 @@ import zhCN from 'antd/locale/zh_CN'
 import { useUIStore } from './stores/uiStore'
 import { useTaskStore } from './stores/taskStore'
 import { useListStore } from './stores/listStore'
+import { useTagStore } from './stores/tagStore'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import AppLayout from './components/AppLayout'
 import ShortcutHelpModal from './components/ShortcutHelpModal'
@@ -14,6 +15,7 @@ export default function App() {
   useEffect(() => {
     useTaskStore.getState().init()
     useListStore.getState().init()
+    useTagStore.getState().init()
   }, [])
 
   useKeyboardShortcuts()

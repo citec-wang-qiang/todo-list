@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { Checkbox, Tag, Empty, Space, Typography } from 'antd'
-import { StarOutlined, StarFilled, HolderOutlined } from '@ant-design/icons'
+import { StarOutlined, StarFilled, HolderOutlined, EditOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import {
   DndContext,
@@ -19,8 +20,10 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useTaskStore, type Priority, type Task } from '../stores/taskStore'
 import { useUIStore } from '../stores/uiStore'
+import { useTagStore } from '../stores/tagStore'
 import { filterTasks } from '../utils/filter'
 import HighlightText from './HighlightText'
+import TaskEditModal from './TaskEditModal'
 
 const priorityColor: Record<Priority, string> = {
   high: 'red',
@@ -36,13 +39,15 @@ const priorityLabelKey: Record<Priority, string> = {
   none: 'task.priority.none'
 }
 
-function SortableTaskItem({ task }: { task: Task }) {
+function SortableTaskItem({ task, onEdit }: { task: Task; onEdit: () => void }) {
   const { t } = useTranslation()
   const searchQuery = useUIStore((s) => s.searchQuery)
   const selectedTaskId = useUIStore((s) => s.selectedTaskId)
   const setSelectedTaskId = useUIStore((s) => s.setSelectedTaskId)
   const toggleComplete = useTaskStore((s) => s.toggleComplete)
   const toggleStar = useTaskStore((s) => s.toggleStar)
+  const allTags = useTagStore((s) => s.tags)
+  const tagColorMap = Object.fromEntries(allTags.map((t) => [t.name, t.color]))
 
   const {
     attributes,
@@ -95,6 +100,11 @@ function SortableTaskItem({ task }: { task: Task }) {
                 {t(priorityLabelKey[task.priority])}
               </Tag>
             )}
+            {task.tags.map((tagName) => (
+              <Tag key={tagName} color={tagColorMap[tagName] || 'default'}>
+                {tagName}
+              </Tag>
+            ))}
           </Space>
         </div>
         {(task.description || task.dueDate) && (
@@ -115,6 +125,12 @@ function SortableTaskItem({ task }: { task: Task }) {
         )}
       </div>
       <span
+        onClick={(e) => { e.stopPropagation(); onEdit() }}
+        style={{ cursor: 'pointer', flexShrink: 0, padding: 4 }}
+      >
+        <EditOutlined />
+      </span>
+      <span
         onClick={(e) => { e.stopPropagation(); toggleStar(task.id) }}
         style={{ cursor: 'pointer', flexShrink: 0, padding: 4 }}
       >
@@ -133,6 +149,8 @@ export default function TaskList() {
   const selectedListId = useUIStore((s) => s.selectedListId)
   const sortField = useUIStore((s) => s.sortField)
   const sortOrder = useUIStore((s) => s.sortOrder)
+
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   const filtered = filterTasks(tasks, searchQuery, filters, selectedListId)
 
@@ -183,21 +201,28 @@ export default function TaskList() {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={sorted.map((t) => t.id)}
-        strategy={verticalListSortingStrategy}
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        <div style={{ padding: '4px 0' }}>
-          {sorted.map((task) => (
-            <SortableTaskItem key={task.id} task={task} />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+        <SortableContext
+          items={sorted.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div style={{ padding: '4px 0' }}>
+            {sorted.map((task) => (
+              <SortableTaskItem key={task.id} task={task} onEdit={() => setEditingTask(task)} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      <TaskEditModal
+        task={editingTask}
+        open={editingTask !== null}
+        onClose={() => setEditingTask(null)}
+      />
+    </>
   )
 }

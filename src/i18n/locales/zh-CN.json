@@ -9,6 +9,9 @@
   "view.kanban": "看板",
   "view.today": "今日",
   "task.addPlaceholder": "添加新任务，按 Enter 确认",
+  "task.title": "任务标题",
+  "task.description": "描述",
+  "task.edit": "编辑任务",
   "task.search": "搜索任务...",
   "task.priority.high": "高",
   "task.priority.medium": "中",
@@ -54,5 +57,14 @@
   "shortcut.viewList": "切换到列表视图",
   "shortcut.viewKanban": "切换到看板视图",
   "shortcut.viewToday": "切换到今日视图",
-  "shortcut.help": "显示快捷键帮助"
+  "shortcut.help": "显示快捷键帮助",
+  "tag.manage": "标签管理",
+  "tag.name": "标签名称",
+  "tag.color": "颜色",
+  "tag.new": "新建标签",
+  "tag.edit": "编辑标签",
+  "tag.delete": "删除标签",
+  "tag.deleteConfirm": "确定要删除标签「{{name}}」吗？相关任务上的此标签也会被移除。",
+  "tag.namePlaceholder": "输入标签名称",
+  "tag.empty": "暂无标签，点击下方按钮创建"
 }

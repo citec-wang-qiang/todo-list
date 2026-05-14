@@ -4,9 +4,9 @@ import { SearchOutlined, ClearOutlined, UndoOutlined, RedoOutlined } from '@ant-
 import { useTranslation } from 'react-i18next'
 import { useUIStore } from '../stores/uiStore'
 import type { Priority, TaskStatus } from '../stores/taskStore'
-import { useTaskStore } from '../stores/taskStore'
 import { useListStore } from '../stores/listStore'
 import { useHistoryStore } from '../stores/historyStore'
+import { useTagStore } from '../stores/tagStore'
 import { focusHandlers } from '../hooks/useKeyboardShortcuts'
 import type { InputRef } from 'antd'
 
@@ -38,14 +38,12 @@ export default function TaskToolbar() {
   const filters = useUIStore((s) => s.filters)
   const setFilter = useUIStore((s) => s.setFilter)
   const clearFilters = useUIStore((s) => s.clearFilters)
-  const tasks = useTaskStore((s) => s.tasks)
   const lists = useListStore((s) => s.lists)
   const canUndo = useHistoryStore((s) => s.past.length > 0)
   const canRedo = useHistoryStore((s) => s.future.length > 0)
   const undo = useHistoryStore((s) => s.undo)
   const redo = useHistoryStore((s) => s.redo)
-
-  const allTags = [...new Set(tasks.flatMap((t) => t.tags))].sort()
+  const allTags = useTagStore((s) => s.tags)
 
   const hasFilters =
     filters.priority !== 'all' ||
@@ -160,7 +158,7 @@ export default function TaskToolbar() {
               style={{ minWidth: 120, maxWidth: 200 }}
               placeholder={t('filter.tags')}
               maxTagCount={1}
-              options={allTags.map((tag) => ({ value: tag, label: tag }))}
+              options={allTags.map((tag) => ({ value: tag.name, label: tag.name }))}
             />
           )}
           {hasFilters && (
