@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Menu, Button, Avatar, Typography, Space } from 'antd'
+import { Menu, Button, Avatar, Typography, Space, Divider } from 'antd'
 import {
   UnorderedListOutlined,
   StarOutlined,
@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons'
 import { useUIStore } from '../stores/uiStore'
 import { useListStore } from '../stores/listStore'
+import DataActions from './DataActions'
 
 const iconMap: Record<string, React.ReactNode> = {
   FolderOutlined: <FolderOutlined />,
@@ -99,6 +100,8 @@ export default function AppSider({ collapsed }: AppSiderProps) {
       />
       {!collapsed && (
         <div style={{ padding: '8px 16px 16px' }}>
+          <DataActions />
+          <Divider style={{ margin: '8px 0' }} />
           <Button type="dashed" icon={<PlusOutlined />} block>
             {t('nav.newList')}
           </Button>
