@@ -41,5 +41,18 @@
   "data.importCSV": "Import from CSV",
   "data.backupRestore": "Backup & Restore",
   "data.createBackup": "Create Backup",
-  "data.restoreBackup": "Restore from Backup"
+  "data.restoreBackup": "Restore from Backup",
+  "shortcut.title": "Keyboard Shortcuts",
+  "shortcut.key": "Shortcut",
+  "shortcut.description": "Action",
+  "shortcut.newTask": "New Task",
+  "shortcut.save": "Save Current Edit",
+  "shortcut.undo": "Undo",
+  "shortcut.redo": "Redo",
+  "shortcut.delete": "Delete Selected Task",
+  "shortcut.search": "Focus Search",
+  "shortcut.viewList": "Switch to List View",
+  "shortcut.viewKanban": "Switch to Kanban View",
+  "shortcut.viewToday": "Switch to Today View",
+  "shortcut.help": "Show Shortcut Help"
 }

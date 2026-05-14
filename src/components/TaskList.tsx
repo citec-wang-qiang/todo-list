@@ -1,6 +1,22 @@
-import { List, Checkbox, Tag, Empty, Space, Typography } from 'antd'
-import { StarOutlined, StarFilled } from '@ant-design/icons'
+import { Checkbox, Tag, Empty, Space, Typography } from 'antd'
+import { StarOutlined, StarFilled, HolderOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useTaskStore, type Priority, type Task } from '../stores/taskStore'
 import { useUIStore } from '../stores/uiStore'
 import { filterTasks } from '../utils/filter'
@@ -20,29 +36,55 @@ const priorityLabelKey: Record<Priority, string> = {
   none: 'task.priority.none'
 }
 
-function TaskItem({ task }: { task: Task }) {
+function SortableTaskItem({ task }: { task: Task }) {
   const { t } = useTranslation()
   const searchQuery = useUIStore((s) => s.searchQuery)
+  const selectedTaskId = useUIStore((s) => s.selectedTaskId)
+  const setSelectedTaskId = useUIStore((s) => s.setSelectedTaskId)
   const toggleComplete = useTaskStore((s) => s.toggleComplete)
   const toggleStar = useTaskStore((s) => s.toggleStar)
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id })
+
+  const isSelected = selectedTaskId === task.id
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '12px 0',
+    borderBottom: '1px solid rgba(0,0,0,0.06)',
+    background: isSelected ? 'rgba(22,119,255,0.06)' : undefined,
+  }
+
   return (
-    <List.Item
-      actions={[
-        <span key="star" onClick={() => toggleStar(task.id)} style={{ cursor: 'pointer' }}>
-          {task.isStarred ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
-        </span>
-      ]}
-    >
-      <List.Item.Meta
-        avatar={
-          <Checkbox
-            checked={task.status === 'done'}
-            onChange={() => toggleComplete(task.id)}
-          />
-        }
-        title={
-          <Space>
+    <div ref={setNodeRef} style={style} onClick={() => setSelectedTaskId(task.id)}>
+      <span
+        {...attributes}
+        {...listeners}
+        style={{ cursor: 'grab', color: '#999', padding: 4, flexShrink: 0 }}
+      >
+        <HolderOutlined />
+      </span>
+      <Checkbox
+        checked={task.status === 'done'}
+        onChange={() => toggleComplete(task.id)}
+        style={{ flexShrink: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div>
+          <Space size={4}>
             <HighlightText
               text={task.title}
               query={searchQuery}
@@ -54,9 +96,9 @@ function TaskItem({ task }: { task: Task }) {
               </Tag>
             )}
           </Space>
-        }
-        description={
-          <>
+        </div>
+        {(task.description || task.dueDate) && (
+          <div>
             {task.description && searchQuery.trim() && (
               <HighlightText
                 text={task.description}
@@ -65,20 +107,27 @@ function TaskItem({ task }: { task: Task }) {
             )}
             {task.dueDate && (
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {task.description ? ' · ' : ''}
+                {task.description && searchQuery.trim() ? ' · ' : ''}
                 {new Date(task.dueDate).toLocaleDateString()}
               </Typography.Text>
             )}
-          </>
-        }
-      />
-    </List.Item>
+          </div>
+        )}
+      </div>
+      <span
+        onClick={(e) => { e.stopPropagation(); toggleStar(task.id) }}
+        style={{ cursor: 'pointer', flexShrink: 0, padding: 4 }}
+      >
+        {task.isStarred ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+      </span>
+    </div>
   )
 }
 
 export default function TaskList() {
   const { t } = useTranslation()
   const tasks = useTaskStore((s) => s.tasks)
+  const reorderTasks = useTaskStore((s) => s.reorderTasks)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filters = useUIStore((s) => s.filters)
   const selectedListId = useUIStore((s) => s.selectedListId)
@@ -100,9 +149,30 @@ export default function TaskList() {
         return a.title.localeCompare(b.title) * dir
       case 'createdAt':
       default:
-        return ((a.createdAt || '') > (b.createdAt || '') ? 1 : -1) * dir
+        return a.sortOrder - b.sortOrder
     }
   })
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = sorted.findIndex((t) => t.id === active.id)
+      const newIndex = sorted.findIndex((t) => t.id === over.id)
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = [...sorted]
+        const [moved] = reordered.splice(oldIndex, 1)
+        reordered.splice(newIndex, 0, moved)
+        reorderTasks(reordered.map((t) => t.id))
+      }
+    }
+  }
 
   if (sorted.length === 0) {
     return (
@@ -113,10 +183,21 @@ export default function TaskList() {
   }
 
   return (
-    <List
-      dataSource={sorted}
-      renderItem={(task) => <TaskItem task={task} />}
-      style={{ marginTop: 8 }}
-    />
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={sorted.map((t) => t.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div style={{ padding: '4px 0' }}>
+          {sorted.map((task) => (
+            <SortableTaskItem key={task.id} task={task} />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
   )
 }

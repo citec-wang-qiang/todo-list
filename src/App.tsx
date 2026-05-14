@@ -6,6 +6,7 @@ import { useTaskStore } from './stores/taskStore'
 import { useListStore } from './stores/listStore'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import AppLayout from './components/AppLayout'
+import ShortcutHelpModal from './components/ShortcutHelpModal'
 
 export default function App() {
   const themeMode = useUIStore((s) => s.themeMode)
@@ -29,6 +30,7 @@ export default function App() {
     >
       <AntApp>
         <AppLayout />
+        <ShortcutHelpModal />
       </AntApp>
     </ConfigProvider>
   )

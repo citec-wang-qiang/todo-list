@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { loadTasks, insertTask, updateTask, deleteTask } from '../db/tasks'
+import { loadTasks, insertTask, updateTask, deleteTask, batchUpdateSortOrders } from '../db/tasks'
 import { useHistoryStore } from './historyStore'
 
 export type Priority = 'high' | 'medium' | 'low' | 'none'
@@ -16,6 +16,7 @@ export interface Task {
   tags: string[]
   isStarred: boolean
   parentId: string | null
+  sortOrder: number
   createdAt: string
   updatedAt: string
 }
@@ -30,6 +31,8 @@ interface TaskState {
   deleteTask: (id: string) => Promise<void>
   toggleComplete: (id: string) => Promise<void>
   toggleStar: (id: string) => Promise<void>
+  reorderTasks: (orderedIds: string[]) => Promise<void>
+  moveTask: (taskId: string, newStatus: TaskStatus, insertAfterId: string | null) => Promise<void>
 }
 
 export const useTaskStore = create<TaskState>()((set, get) => ({
@@ -43,8 +46,11 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
   },
 
   addTask: async (task) => {
-    await insertTask(task)
-    set((s) => ({ tasks: [task, ...s.tasks] }))
+    const tasks = get().tasks
+    const maxOrder = tasks.reduce((max, t) => Math.max(max, t.sortOrder), 0)
+    const taskWithOrder = { ...task, sortOrder: maxOrder + 1 }
+    await insertTask(taskWithOrder)
+    set((s) => ({ tasks: [taskWithOrder, ...s.tasks] }))
 
     useHistoryStore.getState().push({
       description: `添加任务: ${task.title}`,
@@ -55,9 +61,9 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         }))
       },
       redo: async () => {
-        await insertTask(task)
+        await insertTask(taskWithOrder)
         useTaskStore.setState((s) => ({
-          tasks: [task, ...s.tasks],
+          tasks: [taskWithOrder, ...s.tasks],
         }))
       },
     })
@@ -192,5 +198,62 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         }))
       },
     })
+  },
+
+  reorderTasks: async (orderedIds) => {
+    const updates = orderedIds.map((id, index) => ({
+      id,
+      sortOrder: index,
+    }))
+    const idToOrder = new Map(updates.map((u) => [u.id, u.sortOrder]))
+    await batchUpdateSortOrders(updates)
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        idToOrder.has(t.id)
+          ? { ...t, sortOrder: idToOrder.get(t.id)!, updatedAt: new Date().toISOString() }
+          : t
+      ),
+    }))
+  },
+
+  moveTask: async (taskId, newStatus, insertAfterId) => {
+    const tasks = get().tasks
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return
+
+    const sameStatusTasks = tasks
+      .filter((t) => t.status === newStatus && t.id !== taskId)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+
+    let newOrder: number
+    if (insertAfterId) {
+      const afterIdx = sameStatusTasks.findIndex((t) => t.id === insertAfterId)
+      if (afterIdx >= 0) {
+        const after = sameStatusTasks[afterIdx]
+        const next = sameStatusTasks[afterIdx + 1]
+        if (next) {
+          newOrder = (after.sortOrder + next.sortOrder) / 2
+        } else {
+          newOrder = after.sortOrder + 1
+        }
+      } else {
+        newOrder = sameStatusTasks.length > 0
+          ? sameStatusTasks[sameStatusTasks.length - 1].sortOrder + 1
+          : 0
+      }
+    } else {
+      newOrder = sameStatusTasks.length > 0
+        ? sameStatusTasks[0].sortOrder - 1
+        : 0
+    }
+
+    await updateTask(taskId, { status: newStatus, sortOrder: newOrder })
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === taskId
+          ? { ...t, status: newStatus, sortOrder: newOrder, updatedAt: new Date().toISOString() }
+          : t
+      ),
+    }))
   },
 }))
