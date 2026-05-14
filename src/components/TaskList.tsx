@@ -1,7 +1,10 @@
-import { List, Checkbox, Tag, Typography, Empty, Space } from 'antd'
+import { List, Checkbox, Tag, Empty, Space, Typography } from 'antd'
 import { StarOutlined, StarFilled } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useTaskStore, type Priority, type Task } from '../stores/taskStore'
+import { useUIStore } from '../stores/uiStore'
+import { filterTasks } from '../utils/filter'
+import HighlightText from './HighlightText'
 
 const priorityColor: Record<Priority, string> = {
   high: 'red',
@@ -19,6 +22,7 @@ const priorityLabelKey: Record<Priority, string> = {
 
 function TaskItem({ task }: { task: Task }) {
   const { t } = useTranslation()
+  const searchQuery = useUIStore((s) => s.searchQuery)
   const toggleComplete = useTaskStore((s) => s.toggleComplete)
   const toggleStar = useTaskStore((s) => s.toggleStar)
 
@@ -39,12 +43,11 @@ function TaskItem({ task }: { task: Task }) {
         }
         title={
           <Space>
-            <Typography.Text
+            <HighlightText
+              text={task.title}
+              query={searchQuery}
               delete={task.status === 'done'}
-              style={{ fontWeight: task.status === 'done' ? 'normal' : 500 }}
-            >
-              {task.title}
-            </Typography.Text>
+            />
             {task.priority !== 'none' && (
               <Tag color={priorityColor[task.priority]}>
                 {t(priorityLabelKey[task.priority])}
@@ -53,11 +56,20 @@ function TaskItem({ task }: { task: Task }) {
           </Space>
         }
         description={
-          task.dueDate && (
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-              {new Date(task.dueDate).toLocaleDateString()}
-            </Typography.Text>
-          )
+          <>
+            {task.description && searchQuery.trim() && (
+              <HighlightText
+                text={task.description}
+                query={searchQuery}
+              />
+            )}
+            {task.dueDate && (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {task.description ? ' · ' : ''}
+                {new Date(task.dueDate).toLocaleDateString()}
+              </Typography.Text>
+            )}
+          </>
         }
       />
     </List.Item>
@@ -67,8 +79,32 @@ function TaskItem({ task }: { task: Task }) {
 export default function TaskList() {
   const { t } = useTranslation()
   const tasks = useTaskStore((s) => s.tasks)
+  const searchQuery = useUIStore((s) => s.searchQuery)
+  const filters = useUIStore((s) => s.filters)
+  const selectedListId = useUIStore((s) => s.selectedListId)
+  const sortField = useUIStore((s) => s.sortField)
+  const sortOrder = useUIStore((s) => s.sortOrder)
 
-  if (tasks.length === 0) {
+  const filtered = filterTasks(tasks, searchQuery, filters, selectedListId)
+
+  const sorted = [...filtered].sort((a, b) => {
+    const dir = sortOrder === 'asc' ? 1 : -1
+    switch (sortField) {
+      case 'priority': {
+        const order = { high: 3, medium: 2, low: 1, none: 0 }
+        return (order[b.priority] - order[a.priority]) * dir
+      }
+      case 'dueDate':
+        return ((a.dueDate || '') > (b.dueDate || '') ? 1 : -1) * dir
+      case 'title':
+        return a.title.localeCompare(b.title) * dir
+      case 'createdAt':
+      default:
+        return ((a.createdAt || '') > (b.createdAt || '') ? 1 : -1) * dir
+    }
+  })
+
+  if (sorted.length === 0) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <Empty description={t('task.empty')} />
@@ -78,7 +114,7 @@ export default function TaskList() {
 
   return (
     <List
-      dataSource={tasks}
+      dataSource={sorted}
       renderItem={(task) => <TaskItem task={task} />}
       style={{ marginTop: 8 }}
     />
