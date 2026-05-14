@@ -68,7 +68,7 @@
 
 ## 5. 下一步
 
-- [ ] 确定技术方案
+- [x] 确定技术方案 → 详见 [tech-selection.md](tech-selection.md)
 - [ ] UI 原型设计
 - [ ] 搭建项目脚手架
 - [ ] 实现 MVP：任务 CRUD + 本地存储
