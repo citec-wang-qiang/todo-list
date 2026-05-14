@@ -64,7 +64,7 @@
 | B | Electron + React/Vue | 生态成熟、开发快 | 体积大、内存高 |
 | C | Flutter Desktop | 单一代码库、UI 一致 | 桌面端不够成熟 |
 
-**推荐方案 B (Electron)**：生态成熟，快速交付，后续可迁移至 Tauri。
+**最终选定方案 A (Tauri v2)**：体积小、性能好、Rust 后端，原生体验更佳。详见 [tech-selection.md](tech-selection.md)。
 
 ## 5. 下一步
 
