@@ -69,6 +69,19 @@
 ## 5. 下一步
 
 - [x] 确定技术方案 → 详见 [tech-selection.md](tech-selection.md)
-- [ ] UI 原型设计
-- [ ] 搭建项目脚手架
-- [ ] 实现 MVP：任务 CRUD + 本地存储
+- [x] UI 原型设计
+- [x] 搭建项目脚手架
+- [x] 根据文档创建 Issues → [#10](https://github.com/citec-wang-qiang/todo-list/issues/10) [#11](https://github.com/citec-wang-qiang/todo-list/issues/11) [#12](https://github.com/citec-wang-qiang/todo-list/issues/12) [#13](https://github.com/citec-wang-qiang/todo-list/issues/13) [#14](https://github.com/citec-wang-qiang/todo-list/issues/14) [#15](https://github.com/citec-wang-qiang/todo-list/issues/15) [#16](https://github.com/citec-wang-qiang/todo-list/issues/16) [#17](https://github.com/citec-wang-qiang/todo-list/issues/17)
+
+## 6. 待办 Issues
+
+| Issue | 标题 | 需求来源 |
+|-------|------|----------|
+| [#10](https://github.com/citec-wang-qiang/todo-list/issues/10) | SQLite 数据持久化 | §2.4 数据与同步 |
+| [#11](https://github.com/citec-wang-qiang/todo-list/issues/11) | 搜索与筛选功能 | §2.3 视图 |
+| [#12](https://github.com/citec-wang-qiang/todo-list/issues/12) | 标签管理 | §2.2 分类与组织 |
+| [#13](https://github.com/citec-wang-qiang/todo-list/issues/13) | 拖拽排序与键盘快捷键 | §2.5 用户体验 |
+| [#14](https://github.com/citec-wang-qiang/todo-list/issues/14) | 撤销/重做功能 | §2.5 用户体验 |
+| [#15](https://github.com/citec-wang-qiang/todo-list/issues/15) | 系统通知与截止日期提醒 | §2.1 任务管理 / §2.5 用户体验 |
+| [#16](https://github.com/citec-wang-qiang/todo-list/issues/16) | 数据导入导出与备份恢复 | §2.4 数据与同步 |
+| [#17](https://github.com/citec-wang-qiang/todo-list/issues/17) | 子任务支持 | §2.1 任务管理 |
