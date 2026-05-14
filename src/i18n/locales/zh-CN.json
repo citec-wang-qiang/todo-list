@@ -21,5 +21,13 @@
   "sort.priority": "按优先级",
   "sort.dueDate": "按截止日期",
   "sort.createdAt": "按创建时间",
-  "sort.title": "按名称"
+  "sort.title": "按名称",
+  "filter.priority": "优先级",
+  "filter.status": "状态",
+  "filter.list": "清单",
+  "filter.tags": "标签",
+  "filter.allPriority": "全部优先级",
+  "filter.allStatus": "全部状态",
+  "filter.allList": "全部清单",
+  "filter.clear": "清除筛选"
 }

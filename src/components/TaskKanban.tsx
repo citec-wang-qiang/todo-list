@@ -1,6 +1,9 @@
 import { Card, Empty, Typography, Flex } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { useTaskStore, type Task, type TaskStatus } from '../stores/taskStore'
+import { useUIStore } from '../stores/uiStore'
+import { filterTasks } from '../utils/filter'
+import HighlightText from './HighlightText'
 
 const columns: { status: TaskStatus; titleKey: string; color: string }[] = [
   { status: 'todo', titleKey: 'task.status.todo', color: '#1677ff' },
@@ -15,6 +18,7 @@ function KanbanColumn({ titleKey, color, tasks }: {
   tasks: Task[]
 }) {
   const { t } = useTranslation()
+  const searchQuery = useUIStore((s) => s.searchQuery)
 
   return (
     <div style={{ flex: 1, minWidth: 200 }}>
@@ -27,9 +31,11 @@ function KanbanColumn({ titleKey, color, tasks }: {
       <div style={{ minHeight: 200 }}>
         {tasks.map((task) => (
           <Card key={task.id} size="small" style={{ marginBottom: 8 }}>
-            <Typography.Text delete={task.status === 'done'}>
-              {task.title}
-            </Typography.Text>
+            <HighlightText
+              text={task.title}
+              query={searchQuery}
+              delete={task.status === 'done'}
+            />
           </Card>
         ))}
       </div>
@@ -40,8 +46,13 @@ function KanbanColumn({ titleKey, color, tasks }: {
 export default function TaskKanban() {
   const { t } = useTranslation()
   const tasks = useTaskStore((s) => s.tasks)
+  const searchQuery = useUIStore((s) => s.searchQuery)
+  const filters = useUIStore((s) => s.filters)
+  const selectedListId = useUIStore((s) => s.selectedListId)
 
-  if (tasks.length === 0) {
+  const filtered = filterTasks(tasks, searchQuery, filters, selectedListId)
+
+  if (filtered.length === 0) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <Empty description={t('task.empty')} />
@@ -57,7 +68,7 @@ export default function TaskKanban() {
           status={col.status}
           titleKey={col.titleKey}
           color={col.color}
-          tasks={tasks.filter((t) => t.status === col.status)}
+          tasks={filtered.filter((t) => t.status === col.status)}
         />
       ))}
     </Flex>

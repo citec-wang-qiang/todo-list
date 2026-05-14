@@ -21,5 +21,13 @@
   "sort.priority": "By Priority",
   "sort.dueDate": "By Due Date",
   "sort.createdAt": "By Created",
-  "sort.title": "By Name"
+  "sort.title": "By Name",
+  "filter.priority": "Priority",
+  "filter.status": "Status",
+  "filter.list": "List",
+  "filter.tags": "Tags",
+  "filter.allPriority": "All Priorities",
+  "filter.allStatus": "All Statuses",
+  "filter.allList": "All Lists",
+  "filter.clear": "Clear Filters"
 }
