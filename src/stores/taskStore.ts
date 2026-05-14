@@ -312,6 +312,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
       listId: null,
       tags: [],
       isStarred: false,
+      reminderAt: null,
       parentId,
       sortOrder: siblings.length,
       createdAt: now,
