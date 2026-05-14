@@ -4,6 +4,7 @@ import zhCN from 'antd/locale/zh_CN'
 import { useUIStore } from './stores/uiStore'
 import { useTaskStore } from './stores/taskStore'
 import { useListStore } from './stores/listStore'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import AppLayout from './components/AppLayout'
 
 export default function App() {
@@ -13,6 +14,8 @@ export default function App() {
     useTaskStore.getState().init()
     useListStore.getState().init()
   }, [])
+
+  useKeyboardShortcuts()
 
   return (
     <ConfigProvider

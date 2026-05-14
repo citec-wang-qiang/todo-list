@@ -29,5 +29,7 @@
   "filter.allPriority": "All Priorities",
   "filter.allStatus": "All Statuses",
   "filter.allList": "All Lists",
-  "filter.clear": "Clear Filters"
+  "filter.clear": "Clear Filters",
+  "toolbar.undo": "Undo",
+  "toolbar.redo": "Redo"
 }
