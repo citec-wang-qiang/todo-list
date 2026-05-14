@@ -22,6 +22,8 @@ interface UIState {
   sortOrder: SortOrder
   selectedListId: string | null
   filters: Filters
+  selectedTaskId: string | null
+  shortcutHelpOpen: boolean
 
   toggleTheme: () => void
   toggleSider: () => void
@@ -32,6 +34,8 @@ interface UIState {
   setSelectedListId: (id: string | null) => void
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void
   clearFilters: () => void
+  setSelectedTaskId: (id: string | null) => void
+  setShortcutHelpOpen: (open: boolean) => void
 }
 
 const defaultFilters: Filters = {
@@ -50,6 +54,8 @@ export const useUIStore = create<UIState>()((set) => ({
   sortOrder: 'desc',
   selectedListId: null,
   filters: { ...defaultFilters },
+  selectedTaskId: null,
+  shortcutHelpOpen: false,
 
   toggleTheme: () =>
     set((s) => ({ themeMode: s.themeMode === 'light' ? 'dark' : 'light' })),
@@ -62,5 +68,7 @@ export const useUIStore = create<UIState>()((set) => ({
   setSelectedListId: (id) => set({ selectedListId: id }),
   setFilter: (key, value) =>
     set((s) => ({ filters: { ...s.filters, [key]: value } })),
-  clearFilters: () => set({ filters: { ...defaultFilters }, searchQuery: '' })
+  clearFilters: () => set({ filters: { ...defaultFilters }, searchQuery: '' }),
+  setSelectedTaskId: (id) => set({ selectedTaskId: id }),
+  setShortcutHelpOpen: (open) => set({ shortcutHelpOpen: open }),
 }))

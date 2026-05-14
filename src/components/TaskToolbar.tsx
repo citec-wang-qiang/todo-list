@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react'
 import { Input, Select, Space, Button, Tooltip } from 'antd'
 import { SearchOutlined, ClearOutlined, UndoOutlined, RedoOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
@@ -6,6 +7,8 @@ import type { Priority, TaskStatus } from '../stores/taskStore'
 import { useTaskStore } from '../stores/taskStore'
 import { useListStore } from '../stores/listStore'
 import { useHistoryStore } from '../stores/historyStore'
+import { focusHandlers } from '../hooks/useKeyboardShortcuts'
+import type { InputRef } from 'antd'
 
 const priorityOptions: { value: Priority | 'all'; labelKey: string }[] = [
   { value: 'all', labelKey: 'filter.allPriority' },
@@ -51,11 +54,23 @@ export default function TaskToolbar() {
     filters.tags.length > 0 ||
     searchQuery !== ''
 
+  const searchInputRef = useRef<InputRef>(null)
+
+  useEffect(() => {
+    focusHandlers.search = () => {
+      searchInputRef.current?.focus()
+    }
+    return () => {
+      delete focusHandlers.search
+    }
+  }, [])
+
   return (
     <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
       <Space direction="vertical" size={8} style={{ width: '100%' }}>
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Input
+            ref={searchInputRef}
             placeholder={t('task.search')}
             prefix={<SearchOutlined />}
             value={searchQuery}

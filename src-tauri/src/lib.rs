@@ -28,12 +28,20 @@ fn copy_file(src: String, dest: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  let migrations = vec![Migration {
-    version: 1,
-    description: "create initial tables",
-    sql: include_str!("../migrations/001_init.sql"),
-    kind: MigrationKind::Up,
-  }];
+  let migrations = vec![
+    Migration {
+      version: 1,
+      description: "create initial tables",
+      sql: include_str!("../migrations/001_init.sql"),
+      kind: MigrationKind::Up,
+    },
+    Migration {
+      version: 2,
+      description: "add sort_order column to tasks",
+      sql: include_str!("../migrations/002_add_sort_order.sql"),
+      kind: MigrationKind::Up,
+    },
+  ];
 
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())

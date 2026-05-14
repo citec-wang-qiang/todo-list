@@ -41,5 +41,18 @@
   "data.importCSV": "从 CSV 导入",
   "data.backupRestore": "备份与恢复",
   "data.createBackup": "创建备份",
-  "data.restoreBackup": "从备份恢复"
+  "data.restoreBackup": "从备份恢复",
+  "shortcut.title": "键盘快捷键",
+  "shortcut.key": "快捷键",
+  "shortcut.description": "操作",
+  "shortcut.newTask": "新建任务",
+  "shortcut.save": "保存当前编辑",
+  "shortcut.undo": "撤销",
+  "shortcut.redo": "重做",
+  "shortcut.delete": "删除选中任务",
+  "shortcut.search": "聚焦搜索框",
+  "shortcut.viewList": "切换到列表视图",
+  "shortcut.viewKanban": "切换到看板视图",
+  "shortcut.viewToday": "切换到今日视图",
+  "shortcut.help": "显示快捷键帮助"
 }

@@ -11,6 +11,7 @@ interface TaskRow {
   list_id: string | null
   is_starred: number
   parent_id: string | null
+  sort_order: number
   created_at: string
   updated_at: string
   tags: string | null
@@ -28,6 +29,7 @@ function rowToTask(row: TaskRow): Task {
     tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
     isStarred: row.is_starred === 1,
     parentId: row.parent_id,
+    sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -41,7 +43,7 @@ export async function loadTasks(): Promise<Task[]> {
      LEFT JOIN task_tags tt ON t.id = tt.task_id
      LEFT JOIN tags tg ON tt.tag_id = tg.id
      GROUP BY t.id
-     ORDER BY t.created_at DESC`
+     ORDER BY t.sort_order ASC, t.created_at DESC`
   )
   return rows.map(rowToTask)
 }
@@ -49,8 +51,8 @@ export async function loadTasks(): Promise<Task[]> {
 export async function insertTask(task: Task): Promise<void> {
   const db = await getDb()
   await db.execute(
-    `INSERT INTO tasks (id, title, description, priority, status, due_date, list_id, is_starred, parent_id, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    `INSERT INTO tasks (id, title, description, priority, status, due_date, list_id, is_starred, parent_id, sort_order, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
       task.id,
       task.title,
@@ -61,6 +63,7 @@ export async function insertTask(task: Task): Promise<void> {
       task.listId,
       task.isStarred ? 1 : 0,
       task.parentId,
+      task.sortOrder,
       task.createdAt,
       task.updatedAt,
     ]
@@ -83,6 +86,7 @@ export async function updateTask(id: string, patch: Partial<Task>): Promise<void
     listId: 'list_id',
     isStarred: 'is_starred',
     parentId: 'parent_id',
+    sortOrder: 'sort_order',
     updatedAt: 'updated_at',
   }
 
@@ -117,6 +121,18 @@ export async function updateTask(id: string, patch: Partial<Task>): Promise<void
 export async function deleteTask(id: string): Promise<void> {
   const db = await getDb()
   await db.execute('DELETE FROM tasks WHERE id = $1', [id])
+}
+
+export async function batchUpdateSortOrders(
+  updates: { id: string; sortOrder: number }[]
+): Promise<void> {
+  const db = await getDb()
+  for (const { id, sortOrder } of updates) {
+    await db.execute(
+      'UPDATE tasks SET sort_order = $1, updated_at = $2 WHERE id = $3',
+      [sortOrder, new Date().toISOString(), id]
+    )
+  }
 }
 
 async function syncTaskTags(db: Awaited<ReturnType<typeof getDb>>, taskId: string, tagNames: string[]): Promise<void> {
